@@ -1,0 +1,11 @@
+{
+  "name": "Kiri — Aprende línguas",
+  "short_name": "Kiri",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#FFFFFF",
+  "theme_color": "#7B61FF",
+  "lang": "pt-PT",
+  "icons": [{ "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }]
+}
