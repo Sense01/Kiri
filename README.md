@@ -4,10 +4,17 @@ Kiri é uma app web gratuita para aprender línguas com lições curtas e divert
 
 **Experimenta:** https://sense01.github.io/Kiri/
 
+## Curso de francês
+
+O francês segue a estrutura completa de um curso do nível Introdução até ao B2: **8 secções e 272 unidades**, organizadas por tema e gramática. As Secções 1 e 2 (32 unidades) já têm conteúdo completo. As restantes aparecem no percurso como «Em breve» e vão sendo preenchidas em `js/courses/fr.js`.
+
+Cada unidade tem 4 níveis de lições (3 lições por nível), uma história, um baú, uma revisão da unidade e o desafio Lendário. Também é possível saltar unidades e secções com um teste.
+
 ## Funcionalidades
 
 - **Percurso de aprendizagem**: unidades com lições, baús de recompensa, revisão de unidade e teste para saltar unidades
-- **7 tipos de exercício**: escolher a imagem, pares, construir frases (nos dois sentidos), audição, escrever a tradução, completar a frase e pronúncia (microfone)
+- **8 tipos de exercício**: escolher a imagem, pares, construir frases (nos dois sentidos), audição, escrever a tradução, escolher o significado, completar a frase e pronúncia (microfone)
+- **Histórias** com diálogos, **nível Lendário**, **testes de secção** e o jogo **Pares relâmpago** (contra o relógio)
 - **Dicionário ao toque**: toca numa palavra para veres a tradução e a ouvires
 - **Vidas** que se regeneram com o tempo, **gemas**, **XP**, **meta diária** e **sequência de dias** com proteções
 - **Ligas semanais** com promoção e despromoção

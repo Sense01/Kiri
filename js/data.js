@@ -102,57 +102,6 @@ window.KIRI_COURSES = {
     ],
     extra: { yo:'eu', soy:'sou', un:'um', una:'uma', el:'o', la:'a', es:'é', está:'está', ella:'ela', 'él':'ele', 'tú':'tu', eres:'és', dice:'diz', mi:'minha / meu', su:'seu / sua', tengo:'tenho', tenemos:'temos', esta:'esta', en:'em', 'dónde':'onde', necesito:'preciso', vamos:'vamos', al:'ao', tienes:'tens', como:'como', bebe:'bebe', roja:'vermelha', quiero:'quero', comemos:'comemos', y:'e', huevos:'ovos', 'fría':'fria', a:'a', le:'lhe', gusta:'gosta', alto:'alto', estudiante:'estudante', llega:'chega', tarde:'tarde', 'aquí':'aqui', nuevo:'novo' }
   },
-  fr: {
-    name: 'Francês', voice: 'fr-FR', learners: '10,9 M',
-    units: [
-      { title: 'Primeiros passos', desc: 'Cumprimentar e apresentar-te',
-        words: [['bonjour','olá','👋'],['merci','obrigado','🙏'],['homme','homem','👨'],['femme','mulher','👩'],['garçon','rapaz','👦'],['fille','rapariga','👧'],['oui','sim','✅'],['non','não','❌']],
-        sentences: [
-          ['Bonjour, je suis Ana.','Olá, eu sou a Ana.',['Olá, sou a Ana.','Olá, eu sou Ana.','Olá, sou Ana.','Bom dia, eu sou a Ana.','Bom dia, sou a Ana.']],
-          ['Je suis un homme.','Eu sou um homem.',['Sou um homem.']],
-          ['Je suis une femme.','Eu sou uma mulher.',['Sou uma mulher.']],
-          ['Le garçon dit bonjour.','O rapaz diz olá.',['O menino diz olá.','O rapaz diz bom dia.','O menino diz bom dia.']],
-          ['Oui, merci.','Sim, obrigado.',['Sim, obrigada.']],
-          ['Au revoir, Thomas !','Adeus, Thomas!',[]],
-          ['Non, tu es une fille.','Não, tu és uma rapariga.',['Não, és uma rapariga.','Não, tu és uma menina.','Não, és uma menina.']]
-        ]},
-      { title: 'Comida e bebida', desc: 'Pedir comida e falar de gostos',
-        words: [['eau','água','💧'],['pain','pão','🍞'],['pomme','maçã','🍎'],['café','café','☕'],['lait','leite','🥛'],['fromage','queijo','🧀'],['œuf','ovo','🥚'],['riz','arroz','🍚']],
-        sentences: [
-          ['Je mange du pain.','Eu como pão.',['Como pão.']],
-          ["Elle boit de l'eau.",'Ela bebe água.',[]],
-          ['La pomme est rouge.','A maçã é vermelha.',[]],
-          ['Je veux un café.','Eu quero um café.',['Quero um café.']],
-          ['Nous mangeons du riz et des œufs.','Nós comemos arroz e ovos.',['Comemos arroz e ovos.']],
-          ['Le lait est froid.','O leite está frio.',['O leite é frio.']],
-          ['Il aime le fromage.','Ele gosta de queijo.',['Ele adora queijo.']]
-        ]},
-      { title: 'Família', desc: 'Falar da tua família e da tua casa',
-        words: [['mère','mãe','👩‍👧'],['père','pai','👨‍👦'],['sœur','irmã','👭'],['frère','irmão','👬'],['chien','cão','🐕'],['chat','gato','🐈'],['maison','casa','🏠'],['famille','família','👪']],
-        sentences: [
-          ['Ma mère est ici.','A minha mãe está aqui.',['Minha mãe está aqui.']],
-          ['Son père est grand.','O pai dele é alto.',['O pai dela é alto.','O seu pai é alto.']],
-          ["J'ai un frère.",'Eu tenho um irmão.',['Tenho um irmão.']],
-          ['Le chat est dans la maison.','O gato está na casa.',['O gato está em casa.']],
-          ['Nous avons un chien.','Nós temos um cão.',['Temos um cão.','Nós temos um cachorro.','Temos um cachorro.']],
-          ['Sa sœur est étudiante.','A irmã dela é estudante.',['A irmã dele é estudante.','A sua irmã é estudante.']],
-          ["C'est ma famille.",'Esta é a minha família.',['Esta é minha família.','É a minha família.']]
-        ]},
-      { title: 'Na cidade', desc: 'Orientar-te e viajar',
-        words: [['train','comboio','🚆'],['rue','rua','🛣️'],['hôtel','hotel','🏨'],['billet','bilhete','🎟️'],['carte','mapa','🗺️'],['voiture','carro','🚗'],['aéroport','aeroporto','✈️'],['bus','autocarro','🚌']],
-        sentences: [
-          ["Où est l'hôtel ?",'Onde é o hotel?',['Onde fica o hotel?','Onde está o hotel?']],
-          ['Le train est en retard.','O comboio está atrasado.',[]],
-          ["J'ai besoin d'un billet.",'Eu preciso de um bilhete.',['Preciso de um bilhete.']],
-          ['Le bus est ici.','O autocarro está aqui.',[]],
-          ["Nous allons à l'aéroport.",'Nós vamos para o aeroporto.',['Vamos para o aeroporto.','Nós vamos ao aeroporto.','Vamos ao aeroporto.']],
-          ['Tu as une carte ?','Tens um mapa?',['Tu tens um mapa?','Você tem um mapa?']],
-          ['La voiture est neuve.','O carro é novo.',[]]
-        ]}
-    ],
-    extra: { je:'eu', suis:'sou', un:'um', une:'uma', le:'o', la:'a', est:'é / está', elle:'ela', il:'ele', tu:'tu', es:'és', dit:'diz', ma:'minha', son:'seu / dele', sa:'sua / dela', "j'ai":'eu tenho', avons:'temos', nous:'nós', "c'est":'é / isto é', dans:'em', 'où':'onde', "l'hôtel":'o hotel', besoin:'necessidade', "d'un":'de um', allons:'vamos', 'à':'a / para', "l'aéroport":'o aeroporto', as:'tens', mange:'como', du:'(algum)', boit:'bebe', de:'de', "l'eau":'a água', rouge:'vermelho', veux:'quero', mangeons:'comemos', et:'e', des:'uns / umas', 'œufs':'ovos', froid:'frio', aime:'gosta', grand:'alto / grande', 'étudiante':'estudante', en:'em', retard:'atraso', ici:'aqui', neuve:'nova', au:'ao', revoir:'(adeus)' }
-  }
-  ,
   de: {
     name: 'Alemão', voice: 'de-DE', learners: '7,2 M',
     units: [

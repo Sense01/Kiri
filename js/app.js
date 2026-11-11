@@ -5,7 +5,8 @@ const C = window.KIRI_COURSES;
 const KEY = 'kiri-state-v1';
 const HEART_MS = 30 * 60 * 1000, MAX_HEARTS = 5, REFILL_COST = 350;
 const UNIT_COLORS = [['#7B61FF','#5B41DF'],['#14B87A','#0D9563'],['#FF5FA2','#D93D80'],['#1EA4F0','#0B84C9'],['#FF8A3D','#DB6A1F'],['#11B5C4','#0A909C']];
-const PATTERN = ['L','L','L','C','L','L','T'];
+const PATTERN = ['L','L','S','C','L','L','T'];
+const LPN = 3; // lições por nível
 const OFFSETS = [0, 44, 70, 44, 0, -44, -70, -44];
 const LEAGUES = [['Bronze','#CD7F45'],['Prata','#A9B1C1'],['Ouro','#FFB020'],['Safira','#1E6FF0'],['Rubi','#E5304D'],['Esmeralda','#14B87A'],['Ametista','#9B4DFF'],['Pérola','#E9A3B6'],['Obsidiana','#4A4860'],['Diamante','#3CCFE0']];
 const NAMES = ['Sofia','Tiago','Mariana','Rafael','Inês','Diogo','Beatriz','João','Leonor','Miguel','Carolina','Pedro','Matilde','Gonçalo','Lara','Rodrigo','Alice','Martim','Clara','Duarte','Lucas M.','Emma','Noah','Yuki','Amara','Mateo','Chloé','Luca','Aisha','Kenji','Olga','Ravi','Zoe','Hugo','Nina','Bruno','Helena','Simão','Maria J.','Afonso'];
@@ -100,7 +101,7 @@ const clean = s => s.replace(/[’‘]/g, "'").replace(/[.,!?¿¡;:«»"()]/g, '
 const norm = s => clean(s).toLowerCase().replace(/\s+/g, ' ').trim();
 const deaccent = s => s.normalize('NFD').replace(/[̀-ͯ]/g, '');
 const tokens = s => clean(s).split(/\s+/).filter(Boolean);
-const KEEP_CASE = /^(I|I'm|Ana|Tom|Tomás|Thomas|Tommaso)$/;
+const KEEP_CASE = /^(I|I'm|Ana|Tom|Tomás|Thomas|Tommaso|Paul|Marie|Léa|Anne|Hugo|Paris|Lyon|Lisbonne|Lisboa|France|França|Portugal|Italie|Itália|Espagne|Espanha)$/;
 const tileTokens = s => tokens(s).map((t, i) => (i === 0 && !KEEP_CASE.test(t)) ? t.charAt(0).toLowerCase() + t.slice(1) : t);
 function lev(a, b) { const m = a.length, n = b.length; const d = Array.from({length: m + 1}, (_, i) => [i]); for (let j = 1; j <= n; j++) d[0][j] = j; for (let i = 1; i <= m; i++) for (let j = 1; j <= n; j++) d[i][j] = Math.min(d[i-1][j] + 1, d[i][j-1] + 1, d[i-1][j-1] + (a[i-1] === b[j-1] ? 0 : 1)); return d[m][n]; }
 
@@ -306,13 +307,28 @@ function confetti() {
 /* ---------- Percurso ---------- */
 const nodeId = (u, n) => `${u}-${n}`;
 const isDone = (u, n) => !!cstate().done[nodeId(u, n)];
+const hasContent = u => { const x = course().units[u]; return !!(x && x.words.length && x.sentences.length); };
+const sectionsOf = () => course().sections || [{ title: 'Fundamentos', cefr: 'A1', desc: 'O essencial para começares a falar' }];
+const secOf = u => course().units[u].s || 0;
+const unitsOfSection = s => course().units.map((x, u) => u).filter(u => secOf(u) === s);
+const lessonsDone = id => (cstate().lp || {})[id] || 0;
 function currentNode() {
   const units = course().units;
-  for (let u = 0; u < units.length; u++) for (let n = 0; n < PATTERN.length; n++) if (!isDone(u, n)) return { u, n };
+  for (let u = 0; u < units.length; u++) { if (!hasContent(u)) return null; for (let n = 0; n < PATTERN.length; n++) if (!isDone(u, n)) return { u, n }; }
   return null;
 }
 const order = (u, n) => u * PATTERN.length + n;
-function isUnlocked(u, n) { const cur = currentNode(); return !cur || order(u, n) <= order(cur.u, cur.n); }
+function isUnlocked(u, n) { if (!hasContent(u)) return false; const cur = currentNode(); return !cur || order(u, n) <= order(cur.u, cur.n); }
+function sectionProgress(sec) {
+  const us = unitsOfSection(sec).filter(hasContent); if (!us.length) return 0;
+  let d = 0; us.forEach(u => PATTERN.forEach((_, n) => { if (isDone(u, n)) d++; }));
+  return d / (us.length * PATTERN.length);
+}
+function activeSection() {
+  const cs = cstate(); if (typeof cs.view === 'number' && cs.view < sectionsOf().length) return cs.view;
+  const cur = currentNode(); if (cur) return secOf(cur.u);
+  let last = 0; course().units.forEach((x, u) => { if (hasContent(u)) last = secOf(u); }); return last;
+}
 const lessonIndex = n => PATTERN.slice(0, n).filter(x => x === 'L').length;
 const LESSONS_PER_UNIT = PATTERN.filter(x => x === 'L').length;
 
@@ -333,7 +349,7 @@ function poolFor(opts) {
     const li = opts.li;
     const wr = [[0, 4], [2, 6], [4, 8]][li] || null, sr = [[0, 3], [2, 5], [4, 7]][li] || null;
     addUnit(opts.u, wr, sr);
-  } else if (opts.mode === 'unit') addUnit(opts.u);
+  } else if (opts.mode === 'unit' || opts.mode === 'legend' || opts.mode === 'story') addUnit(opts.u);
   else if (opts.mode === 'jump') for (let u = 0; u < opts.u; u++) addUnit(u);
   else {
     const cur = currentNode(); const maxU = cur ? (cur.n === 0 && cur.u > 0 ? cur.u - 1 : cur.u) : units.length - 1;
@@ -342,9 +358,11 @@ function poolFor(opts) {
   return { W, S };
 }
 const RECIPES = {
-  lesson: ['select', 'select', 'match', 'bank_tg', 'bank_pt', 'listen', 'fill', 'bank_tg', 'type', 'select', 'bank_pt', 'speak'],
+  lesson: ['select', 'select', 'match', 'bank_tg', 'bank_pt', 'listen', 'fill', 'bank_tg', 'type', 'meaning', 'bank_pt', 'speak'],
   unit: ['match', 'bank_tg', 'bank_pt', 'listen', 'type', 'fill', 'bank_tg', 'speak', 'type', 'bank_pt', 'listen', 'match', 'bank_tg', 'type'],
-  practice: ['bank_tg', 'select', 'bank_pt', 'listen', 'fill', 'type', 'match', 'bank_tg', 'speak', 'bank_pt'],
+  practice: ['bank_tg', 'select', 'bank_pt', 'listen', 'meaning', 'fill', 'type', 'match', 'bank_tg', 'speak', 'bank_pt'],
+  legend: ['bank_pt', 'type', 'listen', 'bank_tg', 'meaning', 'type', 'bank_pt', 'listen', 'fill', 'type', 'bank_tg', 'speak', 'bank_pt', 'type', 'match'],
+  blitz: ['match', 'match', 'match', 'match', 'match'],
   listen: ['listen', 'listen', 'listen', 'listen', 'listen', 'listen', 'listen', 'listen'],
   speak: ['speak', 'speak', 'speak', 'speak', 'speak', 'speak']
 };
@@ -363,6 +381,11 @@ function buildItems(opts) {
   }
   const { W, S } = poolFor(opts);
   if (!W.length || !S.length) return [];
+  if (opts.mode === 'story') {
+    const ss = shuffle(S.slice()).slice(0, 4); const who = shuffle(['Léa', 'Hugo', 'Kiri', 'Inès']).slice(0, 2);
+    const line = (x, i) => ({ t: 'line', s: x, who: who[i % 2], side: i % 2 });
+    return [line(ss[0], 0), line(ss[1], 1), genMeaning(ss[1], units), line(ss[2], 0), line(ss[3], 1), genMeaning(ss[3], units), genBank('tg', ss[2], units)];
+  }
   const recipe = (opts.mode === 'jump' ? RECIPES.unit : RECIPES[opts.mode] || RECIPES.lesson).map(t =>
     t === 'listen' && !canListen() ? 'bank_tg' : t === 'speak' && !canSpeak() ? 'bank_pt' : t);
   const nw = bagger(W), ns = bagger(S);
@@ -376,6 +399,7 @@ function buildItems(opts) {
       case 'type': return genType(ns());
       case 'speak': return { t: 'speak', s: ns() };
       case 'fill': return genFill(S, units) || genSelect(nw(), units);
+      case 'meaning': return genMeaning(ns(), units);
     }
   }).map(it => {
     if (it.t === 'listen') { const d = distract('tg', it.s, units); it.distract = d.distract; }
@@ -406,6 +430,11 @@ function genBank(dir, s, units) {
   return { t: 'bank', dir, s, distract: distract(outLang, s, units).distract, ref: { u: s.u, k: 's', i: s.i } };
 }
 const genType = s => ({ t: 'type', s, ref: { u: s.u, k: 's', i: s.i } });
+function genMeaning(s, units) {
+  const others = shuffle(units[s.u].sentences.filter((x, i) => i !== s.i).map(x => x[1])).slice(0, 2);
+  const options = shuffle([s.s[1], ...others]);
+  return { t: 'meaning', s, options, answer: options.indexOf(s.s[1]), ref: { u: s.u, k: 's', i: s.i } };
+}
 function genFill(S, units) {
   for (const s of shuffle(S.slice()).slice(0, 7)) {
     const words = units[s.u].words; const toks = tokens(s.s[0]);
@@ -437,7 +466,8 @@ function startLesson(opts) {
   const items = buildItems(opts);
   if (!items.length) return toast('Ainda não há nada para praticar aqui.');
   $$('.pop').forEach(p => p.remove());
-  L = { opts, items, idx: 0, total: items.length, correct: 0, wrong: 0, combo: 0, maxCombo: 0, start: Date.now(), costs, requeued: new Set(), ex: null, phase: 'check', dead: false, listenOk: 0 };
+  L = { opts, items, idx: 0, total: items.filter(x => x.t !== 'line').length + items.filter(x => x.t === 'line').length, correct: 0, wrong: 0, combo: 0, maxCombo: 0, start: Date.now(), costs, requeued: new Set(), ex: null, phase: 'check', dead: false, failed: false, listenOk: 0 };
+  if (opts.mode === 'blitz') L.deadline = Date.now() + 75000;
   const el = h(`<div class="lesson" id="lesson">
     <div class="lesson-top"><button class="icon-btn" data-act="quitLesson" aria-label="Sair">${I.close}</button>
       <div style="flex:1;position:relative"><span class="combo-tag"></span><div class="progress"><i style="width:0%"></i></div></div>
@@ -453,9 +483,11 @@ function startLesson(opts) {
 function updateLessonTop() {
   const el = $('#lesson'); if (!el) return;
   $('.progress i', el).style.width = (L.correct / L.total * 100) + '%';
-  $('.lesson-hearts span', el).textContent = unlimited() ? '∞' : state.hearts;
+  const lh = $('.lesson-hearts', el);
+  if (L.deadline) { lh.style.color = 'var(--blue)'; lh.innerHTML = `${I.clock}<span>${fmtTime(L.deadline - Date.now())}</span>`; lh.style.visibility = 'visible'; }
+  else if (L.opts.mode === 'legend') { lh.style.color = 'var(--gold)'; lh.innerHTML = `${I.star}<span>${Math.max(0, 3 - L.wrong)}</span>`; lh.style.visibility = 'visible'; }
+  else { $('span', lh).textContent = unlimited() ? '∞' : state.hearts; lh.style.visibility = L.costs ? 'visible' : 'hidden'; }
   $('.combo-tag', el).textContent = L.combo >= 3 ? `${L.combo} seguidas!` : '';
-  $('.lesson-hearts', el).style.visibility = L.costs ? 'visible' : 'hidden';
 }
 function setReady(v) { const b = $('#lesson .go'); if (b && L.phase === 'check') b.disabled = !v; }
 function nextEx() {
@@ -468,7 +500,7 @@ function nextEx() {
   $('.fb', foot).classList.add('hidden');
   const skip = $('.skip', foot); skip.classList.remove('hidden');
   skip.textContent = it.t === 'listen' ? 'Não posso ouvir agora' : it.t === 'speak' ? 'Não posso falar agora' : 'Saltar';
-  skip.classList.toggle('hidden', it.t === 'match');
+  skip.classList.toggle('hidden', it.t === 'match' || it.t === 'line');
   const main = $('.go', foot); main.className = 'btn go'; main.textContent = 'Verificar'; main.disabled = true;
   L.phase = 'check';
   if (L.ex.mount) L.ex.mount();
@@ -489,8 +521,12 @@ function onSkip() {
   result(false, L.ex.answerText());
 }
 function onMain() {
-  if (L.phase === 'check') { const r = L.ex.check(); if (r) result(r.ok, r.correct, r.note); }
-  else {
+  if (L.phase === 'check') {
+    const r = L.ex.check(); if (!r) return;
+    if (r.silent) { L.correct++; L.idx++; updateLessonTop(); return nextEx(); }
+    result(r.ok, r.correct, r.note);
+  } else {
+    if (L.failed) return failScreen(L.opts.mode === 'legend' ? 'O nível Lendário só permite 2 erros. Tenta outra vez!' : 'Não foi desta. Tenta outra vez!');
     if (L.dead) return outOfHeartsModal();
     L.idx++; nextEx();
   }
@@ -522,6 +558,7 @@ function result(ok, correctText, note) {
       state.hearts = Math.max(0, state.hearts - 1);
       if (state.hearts === 0) L.dead = true;
     }
+    if (L.opts.mode === 'legend' && L.wrong >= 3) L.failed = true;
     sfx.bad(); foot.classList.add('bad'); main.classList.add('bad');
     fb.innerHTML = `<div class="fb-ico">${I.close}</div><div><h3>Resposta correta:</h3><p>${esc(correctText)}</p></div>`;
     main.textContent = L.dead ? 'Continuar' : 'Percebi';
@@ -607,6 +644,29 @@ function makeEx(it) {
       };
       break;
     }
+    case 'line': {
+      const tg = it.s.s[0];
+      const av = it.who === 'Kiri' ? mascot('happy', 'mascot').replace('class="mascot"', 'class="mascot" style="width:80px;flex:none"') : `<span class="avatar" style="background:${it.side ? 'var(--pink)' : 'var(--teal)'};width:64px;height:64px;font-size:26px">${esc(it.who.charAt(0))}</span>`;
+      ex.el = h(`<div class="ex"><div class="ex-badge" style="color:var(--primary)">${I.book} História</div>
+        <div class="prompt-row" style="${it.side ? 'flex-direction:row-reverse' : ''}">${av}<div class="bubble" style="flex-direction:column;align-items:flex-start"><small class="muted" style="font-size:13px;font-weight:900">${esc(it.who)}</small><div style="display:flex;gap:10px;align-items:center">${HAS_TTS ? `<button class="speak-btn small" data-act="say" data-arg="${esc(tg)}">${I.speaker}</button>` : ''}<span>${sentenceHtml(tg)}</span></div></div></div>
+        <p class="muted" style="text-align:center;margin:0">Toca nas palavras sublinhadas para veres o significado.</p></div>`);
+      ex.mount = () => { speak(tg); const b = $('#lesson .go'); b.disabled = false; b.textContent = 'Continuar'; };
+      ex.check = () => ({ ok: true, silent: true });
+      break;
+    }
+    case 'meaning': {
+      const tg = it.s.s[0];
+      ex.el = h(`<div class="ex"><h2 class="ex-title">O que significa esta frase?</h2>${sentencePrompt(tg)}
+        <div class="list-choices">${it.options.map((o, i) => `<button class="choice"><span class="key">${i + 1}</span>${esc(o)}</button>`).join('')}</div></div>`);
+      let sel = -1;
+      const choose = i => { sel = i; $$('.choice', ex.el).forEach((c, j) => c.classList.toggle('sel', j === i)); sfx.tap(); setReady(true); };
+      $$('.choice', ex.el).forEach((c, i) => c.onclick = () => choose(i));
+      ex.key = k => { const n = +k - 1; if (n >= 0 && n < it.options.length) choose(n); };
+      ex.mount = () => speak(tg);
+      ex.answerText = () => it.s.s[1];
+      ex.check = () => sel < 0 ? null : { ok: sel === it.answer, correct: it.s.s[1] };
+      break;
+    }
     case 'fill': {
       const [tg, pt] = it.s.s;
       const sent = it.toks.map((t, i) => i === it.idx ? '<span class="blank">&nbsp;</span>' : `<span>${esc(t)}</span>`).join(' ');
@@ -690,6 +750,10 @@ function finishLesson() {
   let base = 10;
   if (o.mode === 'lesson' && o.redo) base = 5;
   if (o.mode === 'unit' || o.mode === 'jump') base = 20;
+  if (o.mode === 'unit' && isDone(o.u, o.n)) base = 10;
+  if (o.mode === 'story') base = 15;
+  if (o.mode === 'legend') base = 40;
+  if (o.mode === 'blitz') base = 10;
   if (['practice', 'listen', 'speak', 'mistakes'].includes(o.mode)) base = 5;
   if (perfect && o.mode !== 'mistakes') base += 5;
   const xp = addXp(base);
@@ -700,8 +764,12 @@ function finishLesson() {
   if (['practice', 'listen', 'speak'].includes(o.mode) && state.hearts < MAX_HEARTS) state.hearts++;
   const units = course().units;
   const learn = u => units[u].words.forEach(w => { if (!cs.words.includes(w[0])) cs.words.push(w[0]); });
-  if (o.mode === 'lesson' || o.mode === 'unit') { cs.done[nodeId(o.u, o.n)] = true; learn(o.u); }
-  if (o.mode === 'jump') { for (let u = 0; u < o.u; u++) { PATTERN.forEach((_, n) => cs.done[nodeId(u, n)] = true); learn(u); } }
+  const id = o.u !== undefined ? nodeId(o.u, o.n) : null;
+  if (o.mode === 'lesson' && !cs.done[id]) { cs.lp ||= {}; cs.lp[id] = (cs.lp[id] || 0) + 1; if (cs.lp[id] >= LPN) cs.done[id] = true; learn(o.u); }
+  if (o.mode === 'unit' || o.mode === 'story') { cs.done[id] = true; learn(o.u); }
+  if (o.mode === 'legend') { cs.legend ||= {}; cs.legend[o.u] = true; }
+  if (o.mode === 'jump') { for (let u = 0; u < o.u; u++) { if (!hasContent(u)) continue; PATTERN.forEach((_, n) => cs.done[nodeId(u, n)] = true); learn(u); } cs.view = secOf(o.u); }
+  if (o.mode === 'unit' && o.u + 1 < units.length && secOf(o.u + 1) !== secOf(o.u) && typeof cs.view === 'number') cs.view = secOf(o.u + 1);
   let streakUp = false;
   const t = today();
   if (state.lastDay !== t) {
@@ -712,7 +780,9 @@ function finishLesson() {
   save();
   sfx.done(); confetti();
   const el = $('#lesson');
-  el.innerHTML = `<div class="end">${mascot('cheer')}<h1>${o.mode === 'jump' ? 'Salto concluído!' : perfect ? 'Lição perfeita!' : 'Lição concluída!'}</h1>
+  const title = { jump: 'Salto concluído!', story: 'História concluída!', legend: 'Nível Lendário!', blitz: 'Todos os pares!', unit: 'Unidade dominada!' }[o.mode] || (perfect ? 'Lição perfeita!' : 'Lição concluída!');
+  const lpNote = o.mode === 'lesson' && !o.redo && id ? (cs.done[id] ? 'Nível concluído! 🎉' : `Lição ${cs.lp[id]} de ${LPN} deste nível`) : '';
+  el.innerHTML = `<div class="end">${mascot('cheer')}<h1 ${o.mode === 'legend' ? 'style="color:#9B4DFF"' : ''}>${title}</h1>${lpNote ? `<p class="muted" style="margin:-8px 0 0;font-size:18px">${lpNote}</p>` : ''}
     <div class="end-cards">
       <div class="end-card" style="--c:var(--gold)"><small>XP total${doubleOn() ? ' (x2)' : ''}</small><div>${I.bolt}${xp}</div></div>
       <div class="end-card" style="--c:var(--blue)"><small>${secs < 120000 ? 'Rapidíssimo' : 'Tempo'}</small><div>${I.clock}${fmtTime(secs)}</div></div>
@@ -723,6 +793,15 @@ function finishLesson() {
     if (streakUp) return streakScreen(() => closeLesson(questsAfter > questsBefore));
     closeLesson(questsAfter > questsBefore);
   };
+}
+function failScreen(msg) {
+  L.deadline = 0; sfx.bad();
+  const el = $('#lesson');
+  el.innerHTML = `<div class="end">${mascot('sad')}<h1 style="color:var(--bad)">${L.opts.mode === 'blitz' ? 'O tempo acabou!' : 'Quase!'}</h1><p class="muted" style="max-width:380px;margin:0;font-size:18px">${esc(msg)}</p></div>
+    <div class="lesson-foot"><div class="foot-inner"><button class="btn ghost plain" id="fail-quit">Sair</button><button class="btn go" id="fail-retry">Tentar outra vez</button></div></div>`;
+  const opts = L.opts;
+  $('#fail-quit', el).onclick = () => closeLesson();
+  $('#fail-retry', el).onclick = () => { el.remove(); L = null; startLesson(opts); };
 }
 function weekRow() {
   const t = today(); const ws = ymd(weekStart());
@@ -847,42 +926,72 @@ function iosHint() {
     <div style="flex:1"><b>Instala o Kiri no teu iPhone</b><p class="muted" style="margin:4px 0 0">Toca em <b>Partilhar</b> <svg viewBox="0 0 24 24" width="18" height="18" style="vertical-align:-3px"><path d="M12 3v12M7 8l5-5 5 5M5 12v8h14v-8" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg> e depois em <b>Adicionar ao ecrã principal</b>.</p></div>
     <button class="icon-btn" data-act="iosHide" aria-label="Fechar">${I.close}</button></div>`;
 }
+function sectionHead(sec) {
+  const S = sectionsOf()[sec]; const many = sectionsOf().length > 1; const pct = Math.round(sectionProgress(sec) * 100);
+  return `<div class="sec-head"><div style="flex:1;min-width:0"><small>Secção ${sec + 1} · ${esc(S.cefr)}</small><h2>${esc(S.title)}</h2><p>${esc(S.desc)}</p>
+    <div class="bar"><i style="width:${pct}%;background:var(--ok)"></i><span>${pct}%</span></div></div>${many ? `<button class="btn ghost" data-act="sections">Secções</button>` : ''}</div>`;
+}
 function learnPage() {
-  const units = course().units; const cur = currentNode();
-  let html = iosHint();
-  units.forEach((unit, u) => {
+  const units = course().units; const cur = currentNode(); const cs = cstate();
+  const sec = activeSection(); const secUnits = unitsOfSection(sec);
+  let html = iosHint() + sectionHead(sec);
+  secUnits.forEach((u, k) => {
+    const unit = units[u];
     const [col, dark] = UNIT_COLORS[u % UNIT_COLORS.length];
+    const soon = !hasContent(u);
     const unitLocked = !isUnlocked(u, 0);
-    if (u > 0) html += `<div class="unit-divider">${esc(unit.title)}${unitLocked ? `<button class="btn ghost" style="padding:6px 12px;font-size:12px" data-act="jump" data-arg="${u}">Saltar para aqui?</button>` : ''}</div>`;
+    if (k > 0) html += `<div class="unit-divider">${esc(unit.title)}${unitLocked && !soon ? `<button class="btn ghost" style="padding:6px 12px;font-size:12px" data-act="jump" data-arg="${u}">Saltar para aqui?</button>` : ''}</div>`;
     html += `<section class="unit" style="--nc:${col};--nd:${dark}"><div class="unit-head" style="background:${unitLocked ? 'var(--lock-d)' : col}">
-      <div><small>Secção 1, unidade ${u + 1}</small><h2>${esc(unit.desc)}</h2></div>
-      <button class="guide" data-act="guide" data-arg="${u}">${I.book}<span class="lbl">Guia</span></button></div><div class="path">`;
+      <div><small>Secção ${sec + 1}, unidade ${k + 1}${cs.legend && cs.legend[u] ? ' · 👑 Lendário' : ''}</small><h2>${esc(unit.desc)}</h2></div>
+      ${soon ? '<span class="soon-pill">Em breve</span>' : `<button class="guide" data-act="guide" data-arg="${u}">${I.book}<span class="lbl">Guia</span></button>`}</div><div class="path">`;
     PATTERN.forEach((type, n) => {
+      if (soon && n > 2) return;
       const id = nodeId(u, n); const done = isDone(u, n); const unlocked = isUnlocked(u, n);
       const isCur = cur && cur.u === u && cur.n === n;
       const off = OFFSETS[(n + (u % 2) * 4) % OFFSETS.length];
       let inner, cls = 'node';
       if (type === 'C') { cls += ' chest'; inner = I.chestBig; }
-      else if (type === 'T') { cls += ' trophy'; inner = I.trophyBig; }
+      else if (type === 'T') { cls += ' trophy'; inner = I.trophyBig; if (cs.legend && cs.legend[u]) cls += ' legend'; }
+      else if (type === 'S') { cls += ' story'; inner = done ? I.check : unlocked ? I.book : I.lock; }
       else inner = done ? I.check : unlocked ? I.star : I.lock;
       if (!unlocked) cls += ' locked';
-      if (done && type !== 'L') cls += ' done';
-      html += `<div class="node-wrap" style="transform:translateX(${off}px)">${isCur ? `<div class="start-bubble">${state.lessons === 0 ? 'Começar' : type === 'C' ? 'Abrir' : 'Começar'}</div>` : ''}
+      if (done && type !== 'L' && type !== 'S') cls += ' done';
+      const ring = isCur && type === 'L' ? `<svg class="node-ring" viewBox="0 0 100 100"><circle cx="50" cy="50" r="45" fill="none" stroke="var(--line)" stroke-width="7"/><circle cx="50" cy="50" r="45" fill="none" stroke="var(--nc)" stroke-width="7" stroke-linecap="round" stroke-dasharray="${(lessonsDone(id) / LPN) * 283} 283" transform="rotate(-90 50 50)"/></svg>` : '';
+      html += `<div class="node-wrap" style="transform:translateX(${off}px)">${isCur ? `<div class="start-bubble">${type === 'C' ? 'Abrir' : lessonsDone(id) ? 'Continuar' : 'Começar'}</div>` : ''}${ring}
         <button class="${cls}" data-act="node" data-arg="${id}" ${done && type === 'C' ? 'style="opacity:.6"' : ''}>${inner}</button></div>`;
       if (n === 2) html += `<div style="position:relative;width:100%;height:0">${mascot(u % 2 ? 'happy' : 'cheer', 'path-mascot')}</div>`;
     });
     html += '</div></section>';
   });
+  const next = sec + 1;
+  if (next < sectionsOf().length) {
+    const S = sectionsOf()[next]; const first = unitsOfSection(next)[0]; const ready = hasContent(first);
+    const open = isUnlocked(first, 0);
+    html += `<div class="sec-next"><small>A seguir · Secção ${next + 1} · ${esc(S.cefr)}</small><h3>${esc(S.title)}</h3><p class="muted">${esc(S.desc)}</p>
+      ${!ready ? '<button class="btn" disabled>Em breve</button>' : open ? `<button class="btn" data-act="viewSection" data-arg="${next}">Continuar</button>` : `<button class="btn" data-act="jump" data-arg="${first}">Saltar para aqui</button>`}</div>`;
+  }
   return html;
+}
+function sectionsModal() {
+  const cur = currentNode(); const curSec = cur ? secOf(cur.u) : -1;
+  modal(`<h2>Secções do curso</h2><p>${course().name} · ${course().units.length} unidades</p><div class="list">${sectionsOf().map((S, i) => {
+    const us = unitsOfSection(i); const first = us[0]; const ready = hasContent(first); const pct = Math.round(sectionProgress(i) * 100);
+    const open = ready && isUnlocked(first, 0);
+    const btn = !ready ? '<button class="btn" disabled>Em breve</button>' : open ? `<button class="btn ${i === curSec ? '' : 'ghost'}" data-act="viewSection" data-arg="${i}">${pct === 100 ? 'Rever' : i === curSec ? 'Continuar' : 'Ver'}</button>` : `<button class="btn ghost" data-act="jump" data-arg="${first}">Saltar</button>`;
+    return `<div class="list-item"><div class="cefr">${esc(S.cefr)}</div><div class="grow"><h4>Secção ${i + 1}: ${esc(S.title)}</h4><p>${us.length} unidades · ${esc(S.desc)}</p>${ready ? `<div class="bar"><i style="width:${pct}%;background:var(--ok)"></i><span>${pct}%</span></div>` : ''}</div>${btn}</div>`;
+  }).join('')}</div><button class="btn link" data-act="closeModal">Fechar</button>`, { cls: 'wide' });
 }
 function nodePopover(id) {
   const [u, n] = id.split('-').map(Number); const unit = course().units[u];
-  const type = PATTERN[n]; const done = isDone(u, n); const unlocked = isUnlocked(u, n);
-  if (!unlocked) return `<div class="pop locked"><h4>${type === 'T' ? 'Revisão da unidade' : type === 'C' ? 'Baú de recompensas' : esc(unit.title)}</h4><p>Completa todos os níveis acima para desbloqueares este!</p><button class="btn full" disabled>Bloqueado</button></div>`;
+  const type = PATTERN[n]; const done = isDone(u, n); const unlocked = isUnlocked(u, n); const cs = cstate();
+  const legend = cs.legend && cs.legend[u];
+  if (!hasContent(u)) return `<div class="pop locked"><h4>${esc(unit.title)}</h4><p>Esta unidade está em construção. Volta em breve!</p><button class="btn full" disabled>Em breve</button></div>`;
+  if (!unlocked) return `<div class="pop locked"><h4>${type === 'T' ? 'Revisão da unidade' : type === 'C' ? 'Baú de recompensas' : type === 'S' ? 'História' : esc(unit.title)}</h4><p>Completa todos os níveis acima para desbloqueares este!</p><button class="btn full" disabled>Bloqueado</button></div>`;
   if (type === 'C') return `<div class="pop"><h4>Baú de recompensas</h4><p>${done ? 'Já abriste este baú.' : 'Abre o baú para ganhares gemas!'}</p>${done ? '' : `<button class="btn" data-act="openChest" data-arg="${id}">Abrir</button>`}</div>`;
-  if (type === 'T') return `<div class="pop"><h4>Revisão da unidade ${u + 1}</h4><p>${done ? 'Unidade dominada! Pratica outra vez quando quiseres.' : 'Prova que dominas esta unidade.'}</p><button class="btn" data-act="startNode" data-arg="${id}">${done ? 'Praticar +10 XP' : 'Começar +20 XP'}</button></div>`;
-  const li = lessonIndex(n);
-  return `<div class="pop"><h4>${esc(unit.title)}</h4><p>${done ? 'Lição concluída! Pratica outra vez para reforçar.' : `Lição ${li + 1} de ${LESSONS_PER_UNIT}`}</p><button class="btn" data-act="startNode" data-arg="${id}">${done ? 'Praticar +5 XP' : 'Começar +10 XP'}</button></div>`;
+  if (type === 'S') return `<div class="pop"><h4>História: ${esc(unit.title)}</h4><p>${done ? 'Já leste esta história. Lê outra vez!' : 'Lê e ouve um pequeno diálogo e responde às perguntas.'}</p><button class="btn" data-act="startNode" data-arg="${id}">${done ? 'Ler outra vez +15 XP' : 'Começar +15 XP'}</button></div>`;
+  if (type === 'T') return `<div class="pop"><h4>Revisão da unidade</h4><p>${done ? (legend ? 'Unidade Lendária! 👑' : 'Unidade dominada! Chega ao nível Lendário: só podes dar 2 erros.') : 'Prova que dominas esta unidade.'}</p><button class="btn" data-act="startNode" data-arg="${id}">${done ? 'Praticar +10 XP' : 'Começar +20 XP'}</button>${done && !legend ? `<button class="btn" style="margin-top:10px;background:#FFD36B;color:#7A4B00" data-act="legend" data-arg="${u}">👑 Lendário +40 XP</button>` : ''}</div>`;
+  const li = lessonIndex(n); const lp = lessonsDone(id);
+  return `<div class="pop"><h4>${esc(unit.title)}</h4><p>${done ? 'Nível concluído! Pratica outra vez para reforçar.' : `Nível ${li + 1} de ${LESSONS_PER_UNIT} · Lição ${lp + 1} de ${LPN}`}</p><button class="btn" data-act="startNode" data-arg="${id}">${done ? 'Praticar +5 XP' : lp ? 'Continuar +10 XP' : 'Começar +10 XP'}</button></div>`;
 }
 
 function practicePage() {
@@ -893,6 +1002,7 @@ function practicePage() {
     <div class="hero" style="background:var(--blue)"><div><h2>Prática perfeita</h2><p>Revê o que já aprendeste. Cada sessão dá-te +1 vida e não gasta vidas.</p><button class="btn" style="background:#fff;color:var(--blue-d);box-shadow:0 4px 0 rgba(0,0,0,.15);margin-top:14px" data-act="practice" data-arg="practice">Praticar +5 XP</button></div>${mascot('cheer')}</div>
     <div class="list">
       ${item('mistakes', 'var(--bad)', I.redo, 'Rever erros', nm ? `${nm} exercício${nm === 1 ? '' : 's'} para rever` : 'Ainda não tens erros para rever. Boa!', !nm)}
+      ${item('blitz', 'var(--gold)', I.clock, 'Pares relâmpago', 'Combina 25 pares em 75 segundos. Consegues?', false)}
       ${item('listen', 'var(--primary)', I.ear, 'Audição', HAS_TTS ? 'Treina o ouvido com frases que já conheces' : 'O teu browser não suporta voz', !HAS_TTS)}
       ${item('speak', 'var(--pink)', I.mic, 'Pronúncia', SR ? 'Lê frases em voz alta e melhora o sotaque' : 'Disponível no Chrome e no Edge', !SR)}
     </div>
@@ -1036,8 +1146,8 @@ function render(keepScroll) {
 const ACT = {
   closeModal, quitLesson,
   go: p => location.hash = p,
-  courses: coursesModal, hearts: heartsModal, streak: streakModal, guide: u => guideModal(+u),
-  setCourse: code => { state.course = code; cstate(code); save(); closeModal(); render(); toast(`Agora estás a aprender ${C[code].name.toLowerCase()}!`); },
+  courses: coursesModal, hearts: heartsModal, streak: streakModal, guide: u => hasContent(+u) ? guideModal(+u) : toast('Esta unidade ainda está em construção.'),
+  setCourse: code => { state.course = code; delete cstate(code).view; save(); closeModal(); render(); toast(`Agora estás a aprender ${C[code].name.toLowerCase()}!`); },
   say: t => speak(t), saySlow: t => speak(t, true),
   testVoice: () => speak(course().units[0].sentences[0][0]),
   iosHide: () => { try { localStorage.setItem('kiri-ios-hint', '1'); } catch (e) {} $('.ios-hint')?.remove(); },
@@ -1048,13 +1158,17 @@ const ACT = {
   },
   node: (id, el) => {
     const wrap = el.parentElement; const open = $('.pop', wrap);
-    $$('.pop').forEach(p => p.remove());
+    $$('.pop').forEach(p => p.remove()); $$('.node-wrap').forEach(w => w.style.zIndex = '');
     if (open) return;
-    sfx.tap(); wrap.appendChild(h(nodePopover(id)));
+    sfx.tap(); wrap.style.zIndex = 30; wrap.appendChild(h(nodePopover(id)));
   },
+  sections: () => sectionsModal(),
+  viewSection: sec => { cstate().view = +sec; save(); closeModal(); lastPage = null; render(); scrollTo(0, 0); },
+  legend: u => startLesson({ mode: 'legend', u: +u, n: PATTERN.length - 1 }),
   startNode: id => {
     const [u, n] = id.split('-').map(Number);
     if (PATTERN[n] === 'T') startLesson({ mode: 'unit', u, n });
+    else if (PATTERN[n] === 'S') startLesson({ mode: 'story', u, n });
     else startLesson({ mode: 'lesson', u, n, li: lessonIndex(n), redo: isDone(u, n) });
   },
   openChest: id => {
@@ -1064,7 +1178,9 @@ const ACT = {
   },
   jump: u => {
     u = +u;
-    const m = modal(`${mascot('happy')}<h2>Saltar para a unidade ${u + 1}?</h2><p>Faz um teste com o conteúdo das unidades anteriores. Se o terminares, desbloqueias tudo até aqui.</p><button class="btn full" id="jump-go">Fazer o teste</button><button class="btn link" data-act="closeModal">Agora não</button>`);
+    $$('.modal-bg').forEach(x => x.remove());
+    const isSec = u > 0 && secOf(u) !== secOf(u - 1);
+    const m = modal(`${mascot('happy')}<h2>${isSec ? `Saltar para a secção ${secOf(u) + 1}?` : `Saltar para a unidade ${u - unitsOfSection(secOf(u))[0] + 1}?`}</h2><p>Faz um teste com o conteúdo das unidades anteriores. Se o terminares, desbloqueias tudo até aqui.</p><button class="btn full" id="jump-go">Fazer o teste</button><button class="btn link" data-act="closeModal">Agora não</button>`);
     $('.mascot', m).style.cssText = 'width:110px;margin:0 auto';
     $('#jump-go', m).onclick = () => { m.remove(); startLesson({ mode: 'jump', u }); };
   },
@@ -1119,6 +1235,7 @@ setInterval(() => {
   if (!state.course) return;
   if (regenHearts()) { save(); if (!L) render(true); }
   const nh = $('#next-heart'); if (nh) nh.textContent = fmtTime(nextHeartIn());
+  if (L && L.deadline && $('#lesson .lesson-top')) { if (Date.now() >= L.deadline) failScreen('Combina os pares mais depressa da próxima vez!'); else updateLessonTop(); }
 }, 1000);
 
 load();
