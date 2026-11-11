@@ -304,3 +304,16 @@ window.KIRI_COURSES.fr = {
 })();
 // manter a ordem dos cursos no ecrã de escolha
 (() => { const C = window.KIRI_COURSES, o = {}; ['en', 'es', 'fr', 'de', 'it'].forEach(k => { if (C[k]) o[k] = C[k]; }); Object.keys(C).forEach(k => { o[k] ||= C[k]; }); window.KIRI_COURSES = o; })();
+// Outras línguas reutilizam a estrutura do francês: mesmas secções, temas e lado português.
+// T = [[palavras 'alvo|alvo[=pt[=emoji]]|…', [frases alvo na mesma ordem]], …] para cada unidade com conteúdo.
+const FR_ONLY = { 'Horários, savoir e connaître': 'Horários e verbos de conhecer', 'Imperativo e passado com être': 'Imperativo e passado composto', 'Pedir num bistrô': 'Pedir num café', 'Usar rien e personne': 'Usar «nada» e «ninguém»', 'Usar y e en': 'Pronomes de lugar e quantidade', 'Tempos passados, à e de': 'Tempos passados e preposições' };
+window.KIRI_FROM_FR = (code, T, add, local) => {
+  const C = window.KIRI_COURSES, old = C[code] || {}, fr = C.fr, ren = Object.assign({}, FR_ONLY, local); let i = 0;
+  C[code] = { name: old.name, voice: old.voice, sections: fr.sections, extra: Object.assign({}, old.extra, add),
+    units: fr.units.map(u => {
+      if (u.soon) { const t = ren[u.title] || u.title; return { ...u, title: t, desc: t }; }
+      const [ws, ss] = T[i++], tw = ws.split('|');
+      return { ...u, words: u.words.map((w, j) => { const o = tw[j].split('='); return [o[0], o[1] || w[1], o[2] || w[2]]; }),
+        sentences: u.sentences.map((s, j) => [ss[j], s[1], s[2]]) };
+    }) };
+};

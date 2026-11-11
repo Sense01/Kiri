@@ -101,7 +101,7 @@ const clean = s => s.replace(/[’‘]/g, "'").replace(/[.,!?¿¡;:«»"()]/g, '
 const norm = s => clean(s).toLowerCase().replace(/\s+/g, ' ').trim();
 const deaccent = s => s.normalize('NFD').replace(/[̀-ͯ]/g, '');
 const tokens = s => clean(s).split(/\s+/).filter(Boolean);
-const KEEP_CASE = /^(I|I'm|Ana|Tom|Tomás|Thomas|Tommaso|Paul|Marie|Léa|Anne|Hugo|Paris|Lyon|Lisbonne|Lisboa|France|França|Portugal|Italie|Itália|Espagne|Espanha)$/;
+const KEEP_CASE = /^(I|I'm|Ana|Tom|Tomás|Thomas|Tommaso|Paul|Marie|Léa|Anne|Hugo|Paris|Lyon|Lisbonne|Lisboa|France|França|Portugal|Italie|Itália|Espagne|Espanha|Italy|Spain|Lisbon|París|Francia|España|Italia|Lisboa|Frankreich|Italien|Spanien|Lissabon|Parigi|Lione|Lisbona|Portogallo|Spagna|Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday|Wie|Was|Wer|Wo)$/;
 const tileTokens = s => tokens(s).map((t, i) => (i === 0 && !KEEP_CASE.test(t)) ? t.charAt(0).toLowerCase() + t.slice(1) : t);
 function lev(a, b) { const m = a.length, n = b.length; const d = Array.from({length: m + 1}, (_, i) => [i]); for (let j = 1; j <= n; j++) d[0][j] = j; for (let i = 1; i <= m; i++) for (let j = 1; j <= n; j++) d[i][j] = Math.min(d[i-1][j] + 1, d[i][j-1] + 1, d[i-1][j-1] + (a[i-1] === b[j-1] ? 0 : 1)); return d[m][n]; }
 
