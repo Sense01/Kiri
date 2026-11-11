@@ -152,4 +152,105 @@ window.KIRI_COURSES = {
     ],
     extra: { je:'eu', suis:'sou', un:'um', une:'uma', le:'o', la:'a', est:'é / está', elle:'ela', il:'ele', tu:'tu', es:'és', dit:'diz', ma:'minha', son:'seu / dele', sa:'sua / dela', "j'ai":'eu tenho', avons:'temos', nous:'nós', "c'est":'é / isto é', dans:'em', 'où':'onde', "l'hôtel":'o hotel', besoin:'necessidade', "d'un":'de um', allons:'vamos', 'à':'a / para', "l'aéroport":'o aeroporto', as:'tens', mange:'como', du:'(algum)', boit:'bebe', de:'de', "l'eau":'a água', rouge:'vermelho', veux:'quero', mangeons:'comemos', et:'e', des:'uns / umas', 'œufs':'ovos', froid:'frio', aime:'gosta', grand:'alto / grande', 'étudiante':'estudante', en:'em', retard:'atraso', ici:'aqui', neuve:'nova', au:'ao', revoir:'(adeus)' }
   }
+  ,
+  de: {
+    name: 'Alemão', voice: 'de-DE', learners: '7,2 M',
+    units: [
+      { title: 'Primeiros passos', desc: 'Cumprimentar e apresentar-te',
+        words: [['hallo','olá','👋'],['tschüss','adeus','🙋'],['Mann','homem','👨'],['Frau','mulher','👩'],['Junge','rapaz','👦'],['Mädchen','rapariga','👧'],['ja','sim','✅'],['danke','obrigado','🙏']],
+        sentences: [
+          ['Hallo, ich bin Ana.','Olá, eu sou a Ana.',['Olá, sou a Ana.','Olá, eu sou Ana.','Olá, sou Ana.']],
+          ['Ich bin ein Mann.','Eu sou um homem.',['Sou um homem.']],
+          ['Sie ist eine Frau.','Ela é uma mulher.',[]],
+          ['Der Junge sagt hallo.','O rapaz diz olá.',['O menino diz olá.']],
+          ['Ja, danke.','Sim, obrigado.',['Sim, obrigada.']],
+          ['Tschüss, Tom!','Adeus, Tom!',[]],
+          ['Du bist ein Mädchen.','Tu és uma rapariga.',['És uma rapariga.','Tu és uma menina.','És uma menina.','Você é uma menina.']]
+        ]},
+      { title: 'Comida e bebida', desc: 'Pedir comida e falar de gostos',
+        words: [['Wasser','água','💧'],['Brot','pão','🍞'],['Apfel','maçã','🍎'],['Kaffee','café','☕'],['Milch','leite','🥛'],['Käse','queijo','🧀'],['Ei','ovo','🥚'],['Reis','arroz','🍚']],
+        sentences: [
+          ['Ich esse Brot.','Eu como pão.',['Como pão.']],
+          ['Sie trinkt Wasser.','Ela bebe água.',[]],
+          ['Der Apfel ist rot.','A maçã é vermelha.',[]],
+          ['Ich möchte einen Kaffee.','Eu quero um café.',['Quero um café.','Eu queria um café.','Queria um café.']],
+          ['Wir essen Reis und Eier.','Nós comemos arroz e ovos.',['Comemos arroz e ovos.']],
+          ['Die Milch ist kalt.','O leite está frio.',['O leite é frio.']],
+          ['Er mag Käse.','Ele gosta de queijo.',[]]
+        ]},
+      { title: 'Família', desc: 'Falar da tua família e da tua casa',
+        words: [['Mutter','mãe','👩‍👧'],['Vater','pai','👨‍👦'],['Schwester','irmã','👭'],['Bruder','irmão','👬'],['Hund','cão','🐕'],['Katze','gato','🐈'],['Haus','casa','🏠'],['Familie','família','👪']],
+        sentences: [
+          ['Meine Mutter ist hier.','A minha mãe está aqui.',['Minha mãe está aqui.']],
+          ['Sein Vater ist groß.','O pai dele é alto.',['O seu pai é alto.']],
+          ['Ich habe einen Bruder.','Eu tenho um irmão.',['Tenho um irmão.']],
+          ['Die Katze ist im Haus.','O gato está na casa.',['O gato está em casa.','A gata está na casa.','A gata está em casa.']],
+          ['Wir haben einen Hund.','Nós temos um cão.',['Temos um cão.','Nós temos um cachorro.','Temos um cachorro.']],
+          ['Ihre Schwester ist Studentin.','A irmã dela é estudante.',['A sua irmã é estudante.']],
+          ['Das ist meine Familie.','Esta é a minha família.',['Esta é minha família.','Isto é a minha família.']]
+        ]},
+      { title: 'Na cidade', desc: 'Orientar-te e viajar',
+        words: [['Zug','comboio','🚆'],['Straße','rua','🛣️'],['Hotel','hotel','🏨'],['Fahrkarte','bilhete','🎟️'],['Karte','mapa','🗺️'],['Auto','carro','🚗'],['Flughafen','aeroporto','✈️'],['Bus','autocarro','🚌']],
+        sentences: [
+          ['Wo ist das Hotel?','Onde é o hotel?',['Onde fica o hotel?','Onde está o hotel?']],
+          ['Der Zug hat Verspätung.','O comboio está atrasado.',['O comboio tem atraso.']],
+          ['Ich brauche eine Fahrkarte.','Eu preciso de um bilhete.',['Preciso de um bilhete.']],
+          ['Der Bus ist hier.','O autocarro está aqui.',[]],
+          ['Wir fahren zum Flughafen.','Nós vamos para o aeroporto.',['Vamos para o aeroporto.','Nós vamos ao aeroporto.','Vamos ao aeroporto.']],
+          ['Hast du eine Karte?','Tens um mapa?',['Tu tens um mapa?','Você tem um mapa?']],
+          ['Das Auto ist neu.','O carro é novo.',[]]
+        ]}
+    ],
+    extra: { ich:'eu', bin:'sou', ein:'um', eine:'uma', einen:'um', der:'o', die:'a', das:'o / isto', sie:'ela', er:'ele', du:'tu', bist:'és', ist:'é / está', sagt:'diz', esse:'como', trinkt:'bebe', rot:'vermelho', 'möchte':'queria', wir:'nós', essen:'comemos', und:'e', eier:'ovos', kalt:'frio', mag:'gosta de', meine:'minha', sein:'seu / dele', 'groß':'alto / grande', habe:'tenho', im:'no / na', haben:'temos', ihre:'sua / dela', studentin:'estudante', wo:'onde', hat:'tem', 'verspätung':'atraso', brauche:'preciso', hier:'aqui', fahren:'vamos', zum:'para o', hast:'tens', neu:'novo' }
+  },
+  it: {
+    name: 'Italiano', voice: 'it-IT', learners: '6,4 M',
+    units: [
+      { title: 'Primeiros passos', desc: 'Cumprimentar e apresentar-te',
+        words: [['ciao','olá','👋'],['arrivederci','adeus','🙋'],['uomo','homem','👨'],['donna','mulher','👩'],['ragazzo','rapaz','👦'],['ragazza','rapariga','👧'],['sì','sim','✅'],['grazie','obrigado','🙏']],
+        sentences: [
+          ['Ciao, sono Ana.','Olá, eu sou a Ana.',['Olá, sou a Ana.','Olá, eu sou Ana.','Olá, sou Ana.']],
+          ['Io sono un uomo.','Eu sou um homem.',['Sou um homem.']],
+          ['Lei è una donna.','Ela é uma mulher.',[]],
+          ['Il ragazzo dice ciao.','O rapaz diz olá.',['O menino diz olá.']],
+          ['Sì, grazie.','Sim, obrigado.',['Sim, obrigada.']],
+          ['Arrivederci, Tommaso!','Adeus, Tommaso!',[]],
+          ['Tu sei una ragazza.','Tu és uma rapariga.',['És uma rapariga.','Tu és uma menina.','És uma menina.','Você é uma menina.']]
+        ]},
+      { title: 'Comida e bebida', desc: 'Pedir comida e falar de gostos',
+        words: [['acqua','água','💧'],['pane','pão','🍞'],['mela','maçã','🍎'],['caffè','café','☕'],['latte','leite','🥛'],['formaggio','queijo','🧀'],['uovo','ovo','🥚'],['riso','arroz','🍚']],
+        sentences: [
+          ['Io mangio il pane.','Eu como pão.',['Como pão.','Eu como o pão.','Como o pão.']],
+          ['Lei beve acqua.','Ela bebe água.',[]],
+          ['La mela è rossa.','A maçã é vermelha.',[]],
+          ['Voglio un caffè.','Eu quero um café.',['Quero um café.']],
+          ['Mangiamo riso e uova.','Nós comemos arroz e ovos.',['Comemos arroz e ovos.']],
+          ['Il latte è freddo.','O leite está frio.',['O leite é frio.']],
+          ['A lui piace il formaggio.','Ele gosta de queijo.',[]]
+        ]},
+      { title: 'Família', desc: 'Falar da tua família e da tua casa',
+        words: [['madre','mãe','👩‍👧'],['padre','pai','👨‍👦'],['sorella','irmã','👭'],['fratello','irmão','👬'],['cane','cão','🐕'],['gatto','gato','🐈'],['casa','casa','🏠'],['famiglia','família','👪']],
+        sentences: [
+          ['Mia madre è qui.','A minha mãe está aqui.',['Minha mãe está aqui.']],
+          ['Suo padre è alto.','O pai dele é alto.',['O pai dela é alto.','O seu pai é alto.']],
+          ['Ho un fratello.','Eu tenho um irmão.',['Tenho um irmão.']],
+          ['Il gatto è in casa.','O gato está em casa.',['O gato está na casa.']],
+          ['Abbiamo un cane.','Nós temos um cão.',['Temos um cão.','Nós temos um cachorro.','Temos um cachorro.']],
+          ['Sua sorella è studentessa.','A irmã dela é estudante.',['A irmã dele é estudante.','A sua irmã é estudante.']],
+          ['Questa è la mia famiglia.','Esta é a minha família.',['Esta é minha família.']]
+        ]},
+      { title: 'Na cidade', desc: 'Orientar-te e viajar',
+        words: [['treno','comboio','🚆'],['strada','rua','🛣️'],['albergo','hotel','🏨'],['biglietto','bilhete','🎟️'],['mappa','mapa','🗺️'],['macchina','carro','🚗'],['aeroporto','aeroporto','✈️'],['autobus','autocarro','🚌']],
+        sentences: [
+          ["Dov'è l'albergo?",'Onde é o hotel?',['Onde fica o hotel?','Onde está o hotel?']],
+          ['Il treno è in ritardo.','O comboio está atrasado.',[]],
+          ['Ho bisogno di un biglietto.','Eu preciso de um bilhete.',['Preciso de um bilhete.']],
+          ["L'autobus è qui.",'O autocarro está aqui.',[]],
+          ["Andiamo all'aeroporto.",'Nós vamos para o aeroporto.',['Vamos para o aeroporto.','Nós vamos ao aeroporto.','Vamos ao aeroporto.']],
+          ['Hai una mappa?','Tens um mapa?',['Tu tens um mapa?','Você tem um mapa?']],
+          ['La macchina è nuova.','O carro é novo.',[]]
+        ]}
+    ],
+    extra: { io:'eu', sono:'sou', un:'um', una:'uma', il:'o', la:'a', lei:'ela', lui:'ele', 'è':'é / está', tu:'tu', sei:'és', dice:'diz', mangio:'como', beve:'bebe', rossa:'vermelha', voglio:'quero', mangiamo:'comemos', e:'e', uova:'ovos', freddo:'frio', a:'a', piace:'agrada', mia:'minha', suo:'seu / dele', sua:'sua / dela', ho:'tenho', in:'em', abbiamo:'temos', studentessa:'estudante', questa:'esta', "dov'è":'onde é', "l'albergo":'o hotel', ritardo:'atraso', bisogno:'necessidade', di:'de', "l'autobus":'o autocarro', andiamo:'vamos', "all'aeroporto":'ao aeroporto', hai:'tens', nuova:'nova', qui:'aqui', alto:'alto' }
+  }
 };

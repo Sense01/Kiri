@@ -84,7 +84,7 @@ h1,h2,h3{margin:0;font-weight:900}
 .unit-head h2{font-size:22px;margin-top:2px}
 .unit-head .guide{background:rgba(255,255,255,.12);border:2px solid rgba(255,255,255,.4);color:#fff;border-radius:14px;padding:10px 14px;font-weight:900;font-size:14px;letter-spacing:.6px;display:flex;gap:8px;align-items:center;text-transform:uppercase}
 .unit-head .guide svg{width:22px;height:22px}
-.path{position:relative;display:flex;flex-direction:column;align-items:center;gap:34px;padding:48px 0 12px}
+.path{position:relative;display:flex;flex-direction:column;align-items:center;gap:34px;padding:64px 0 12px}
 .node-wrap{position:relative}
 .node{width:72px;height:66px;border-radius:50%;border:none;display:grid;place-items:center;position:relative;color:#fff;box-shadow:0 7px 0 var(--nd);background:var(--nc);transition:transform .1s}
 .node:active{transform:translateY(5px);box-shadow:0 2px 0 var(--nd)}
@@ -323,3 +323,25 @@ h1,h2,h3{margin:0;font-weight:900}
 .hearts-row svg{width:40px;height:40px}
 .ex-badge svg{width:20px;height:20px}
 @media (max-width:768px){.path-mascot{width:96px}}
+
+/* ---------- iPhone / app no ecrã principal ---------- */
+:root{--sat:env(safe-area-inset-top,0px);--sab:env(safe-area-inset-bottom,0px)}
+button,a,.tile,.choice{touch-action:manipulation;-webkit-user-select:none;user-select:none}
+html{-webkit-text-size-adjust:100%}
+body{overscroll-behavior-y:none}
+.lesson-top{padding-top:calc(28px + var(--sat))}
+.lesson-foot{padding-bottom:calc(30px + var(--sab))}
+.welcome{padding-top:calc(24px + var(--sat));padding-bottom:calc(24px + var(--sab))}
+.modal-bg{padding-top:calc(20px + var(--sat));padding-bottom:calc(20px + var(--sab))}
+select.text-input{appearance:auto}
+@media (max-width:768px){
+  .topbar{height:calc(60px + var(--sat));padding-top:var(--sat)}
+  .content{padding-top:calc(72px + var(--sat));padding-bottom:calc(100px + var(--sab))}
+  .unit-head{top:calc(70px + var(--sat))}
+  .bottomnav{height:calc(68px + var(--sab));padding-bottom:var(--sab)}
+  .toast{bottom:calc(90px + var(--sab))}
+}
+@media (max-width:640px){
+  .lesson-top{padding-top:calc(16px + var(--sat))}
+  .lesson-foot{padding-bottom:calc(20px + var(--sab))}
+}

@@ -50,7 +50,9 @@ const leagueBadge = (t, cls='') => `<svg viewBox="0 0 32 32" class="${cls}"><pat
 const FLAGS = {
   en:'<svg viewBox="0 0 60 40" preserveAspectRatio="xMidYMid slice"><rect width="60" height="40" fill="#012169"/><path d="M0 0l60 40M60 0 0 40" stroke="#fff" stroke-width="8"/><path d="M0 0l60 40M60 0 0 40" stroke="#C8102E" stroke-width="3"/><path d="M30 0v40M0 20h60" stroke="#fff" stroke-width="12"/><path d="M30 0v40M0 20h60" stroke="#C8102E" stroke-width="7"/></svg>',
   es:'<svg viewBox="0 0 60 40"><rect width="60" height="40" fill="#C60B1E"/><rect y="10" width="60" height="20" fill="#FFC400"/></svg>',
-  fr:'<svg viewBox="0 0 60 40"><rect width="20" height="40" fill="#002395"/><rect x="20" width="20" height="40" fill="#fff"/><rect x="40" width="20" height="40" fill="#ED2939"/></svg>'
+  fr:'<svg viewBox="0 0 60 40"><rect width="20" height="40" fill="#002395"/><rect x="20" width="20" height="40" fill="#fff"/><rect x="40" width="20" height="40" fill="#ED2939"/></svg>',
+  de:'<svg viewBox="0 0 60 40"><rect width="60" height="14" fill="#000"/><rect y="13" width="60" height="14" fill="#DD0000"/><rect y="26.6" width="60" height="13.4" fill="#FFCE00"/></svg>',
+  it:'<svg viewBox="0 0 60 40"><rect width="20" height="40" fill="#009246"/><rect x="20" width="20" height="40" fill="#fff"/><rect x="40" width="20" height="40" fill="#CE2B37"/></svg>'
 };
 const flag = (code, cls='') => `<span class="flag ${cls}">${FLAGS[code]}</span>`;
 
@@ -98,7 +100,7 @@ const clean = s => s.replace(/[’‘]/g, "'").replace(/[.,!?¿¡;:«»"()]/g, '
 const norm = s => clean(s).toLowerCase().replace(/\s+/g, ' ').trim();
 const deaccent = s => s.normalize('NFD').replace(/[̀-ͯ]/g, '');
 const tokens = s => clean(s).split(/\s+/).filter(Boolean);
-const KEEP_CASE = /^(I|I'm|Ana|Tom|Tomás|Thomas)$/;
+const KEEP_CASE = /^(I|I'm|Ana|Tom|Tomás|Thomas|Tommaso)$/;
 const tileTokens = s => tokens(s).map((t, i) => (i === 0 && !KEEP_CASE.test(t)) ? t.charAt(0).toLowerCase() + t.slice(1) : t);
 function lev(a, b) { const m = a.length, n = b.length; const d = Array.from({length: m + 1}, (_, i) => [i]); for (let j = 1; j <= n; j++) d[0][j] = j; for (let i = 1; i <= m; i++) for (let j = 1; j <= n; j++) d[i][j] = Math.min(d[i-1][j] + 1, d[i][j-1] + 1, d[i-1][j-1] + (a[i-1] === b[j-1] ? 0 : 1)); return d[m][n]; }
 
@@ -109,7 +111,7 @@ function defaults() {
     goal: 20, day: null, dayXp: 0, daily: {}, history: {}, lessons: 0, perfect: 0,
     quests: { day: null, list: [] }, questsMonth: { m: null, n: 0 },
     league: { tier: 0, week: null, xp: 0, top3: 0, pending: null },
-    mistakes: [], settings: { sound: true, listen: true, speak: true, dark: false, listenOff: 0, speakOff: 0 }, joined: Date.now() };
+    mistakes: [], settings: { sound: true, listen: true, speak: true, dark: false, listenOff: 0, speakOff: 0, voices: {} }, joined: Date.now() };
 }
 let state;
 function load() {
@@ -234,15 +236,48 @@ const sfx = {
   coin: () => { tone(988, .08, 'square', 0, .06); tone(1319, .25, 'square', .08, .06); }
 };
 let voices = [];
-if (HAS_TTS) { const lv = () => voices = speechSynthesis.getVoices(); lv(); speechSynthesis.onvoiceschanged = lv; }
-function speak(text, slow = false, lang) {
+if (HAS_TTS) { const lv = () => { voices = speechSynthesis.getVoices(); if (state && state.course && location.hash === '#settings' && !L) render(true); }; voices = speechSynthesis.getVoices(); speechSynthesis.onvoiceschanged = lv; }
+// Vozes "de brincar" do macOS/iOS que soam mal: nunca as escolhemos automaticamente
+const NOVELTY = /albert|bad news|bahh|bells|boing|bubbles|cellos|wobble|zarvox|trinoids|whisper|jester|organ|superstar|good news|fred|junior|ralph|kathy|grandma|grandpa|rocko|shelley|flo\b|eddy|reed|sandy|eloquence/i;
+const PREFERRED_REGION = { en: ['en-US', 'en-GB'], es: ['es-ES', 'es-MX', 'es-US'], fr: ['fr-FR', 'fr-CA'], de: ['de-DE', 'de-AT'], it: ['it-IT'] };
+function voiceScore(v, code) {
+  let sc = 0;
+  if (/natural|neural|online/i.test(v.name)) sc += 60;          // Edge / Windows: vozes neurais
+  if (/premium|enhanced|melhorad|aprimorad|siri/i.test(v.name)) sc += 50; // Apple: vozes premium
+  if (/google/i.test(v.name)) sc += 35;                          // Chrome: vozes Google
+  if (NOVELTY.test(v.name)) sc -= 200;
+  const regions = PREFERRED_REGION[code] || [];
+  const ri = regions.indexOf(v.lang.replace('_', '-'));
+  if (ri >= 0) sc += 10 - ri * 3;
+  return sc;
+}
+function voicesFor(code = state.course) {
+  const pre = C[code].voice.slice(0, 2);
+  return voices.filter(v => v.lang.replace('_', '-').toLowerCase().startsWith(pre)).sort((a, b) => voiceScore(b, code) - voiceScore(a, code));
+}
+function pickVoice(code = state.course) {
+  const list = voicesFor(code); if (!list.length) return null;
+  const chosen = (state.settings.voices || {})[code];
+  return list.find(v => v.name === chosen) || list[0];
+}
+// Áudio gravado (opcional): audio/manifest.json → { "en": { "texto": "audio/en/xxxx.mp3" } }
+let AUDIO = {};
+fetch('audio/manifest.json').then(r => r.ok ? r.json() : {}).then(j => { AUDIO = j || {}; }).catch(() => {});
+let player = null;
+function speak(text, slow = false, code = state.course) {
+  if (!text) return;
+  const clip = AUDIO[code] && (AUDIO[code][text] || AUDIO[code][text.toLowerCase()]);
+  if (clip) {
+    try { if (HAS_TTS) speechSynthesis.cancel(); if (player) player.pause(); player = new Audio(clip); player.playbackRate = slow ? 0.7 : 1; player.play().catch(() => {}); return; } catch (e) {}
+  }
   if (!HAS_TTS) return;
-  lang ||= course().voice;
   speechSynthesis.cancel();
   const u = new SpeechSynthesisUtterance(text);
-  u.lang = lang; u.rate = slow ? 0.55 : 0.92;
-  const v = voices.find(v => v.lang === lang) || voices.find(v => v.lang.startsWith(lang.slice(0, 2)));
+  const v = pickVoice(code);
+  u.lang = v ? v.lang : C[code].voice;
   if (v) u.voice = v;
+  u.rate = slow ? 0.6 : 0.95;
+  u.pitch = 1;
   speechSynthesis.speak(u);
 }
 
@@ -362,7 +397,7 @@ function distract(lang, s, units) {
   if (!s) return { distract: [] };
   const answer = new Set(tokens(lang === 'tg' ? s.s[0] : s.s[1]).map(norm));
   const pool = [];
-  units[s.u].sentences.forEach(x => tokens(lang === 'tg' ? x[0] : x[1]).forEach(t => { const n = norm(t); if (!answer.has(n) && !KEEP_CASE.test(t)) pool.push(t.toLowerCase()); }));
+  units[s.u].sentences.forEach(x => tileTokens(lang === 'tg' ? x[0] : x[1]).forEach(t => { const n = norm(t); if (!answer.has(n) && !KEEP_CASE.test(t)) pool.push(t); }));
   return { distract: shuffle([...new Set(pool)]).slice(0, 3) };
 }
 // bank 'tg' = vê frase na língua-alvo e constrói em português; 'pt' = vê português e constrói na língua-alvo
@@ -751,7 +786,7 @@ function streakModal() {
 }
 function coursesModal() {
   modal(`<h2>Os meus cursos</h2><p>Todos os cursos a partir de português.</p><div class="course-grid">${Object.entries(C).map(([code, c]) =>
-    `<button class="course-card ${code === state.course ? 'on' : ''}" data-act="setCourse" data-arg="${code}">${flag(code, 'lg')}${c.name}<small>${state.courses[code] ? fmtNum(state.courses[code].xp) + ' XP' : c.learners + ' alunos'}</small></button>`).join('')}</div>`, { cls: 'wide' });
+    `<button class="course-card ${code === state.course ? 'on' : ''}" data-act="setCourse" data-arg="${code}">${flag(code, 'lg')}${c.name}<small>${state.courses[code] ? fmtNum(state.courses[code].xp) + ' XP' : c.units.length + ' unidades'}</small></button>`).join('')}</div>`, { cls: 'wide' });
 }
 function guideModal(u) {
   const unit = course().units[u];
@@ -804,9 +839,17 @@ function rightbar(page) {
     <p class="muted" style="text-align:center;font-size:13px;margin:0">Kiri · feito para aprender a brincar</p></aside>`;
 }
 
+function iosHint() {
+  const ios = /iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  let hidden = false; try { hidden = !!localStorage.getItem('kiri-ios-hint'); } catch (e) {}
+  if (!ios || navigator.standalone || hidden) return '';
+  return `<div class="card ios-hint" style="margin-bottom:22px;display:flex;gap:14px;align-items:center"><img src="icons/icon-192.png" alt="" style="width:56px;height:56px;border-radius:14px;flex:none">
+    <div style="flex:1"><b>Instala o Kiri no teu iPhone</b><p class="muted" style="margin:4px 0 0">Toca em <b>Partilhar</b> <svg viewBox="0 0 24 24" width="18" height="18" style="vertical-align:-3px"><path d="M12 3v12M7 8l5-5 5 5M5 12v8h14v-8" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg> e depois em <b>Adicionar ao ecrã principal</b>.</p></div>
+    <button class="icon-btn" data-act="iosHide" aria-label="Fechar">${I.close}</button></div>`;
+}
 function learnPage() {
   const units = course().units; const cur = currentNode();
-  let html = '';
+  let html = iosHint();
   units.forEach((unit, u) => {
     const [col, dark] = UNIT_COLORS[u % UNIT_COLORS.length];
     const unitLocked = !isUnlocked(u, 0);
@@ -929,6 +972,14 @@ function profilePage() {
     <h2 class="section-title">Conquistas</h2><div>${achievements().map(a => `<div class="ach"><div class="ach-badge ${a.lvl ? '' : 'off'}" style="background:${a.color}">${a.emo}<small>NÍVEL ${Math.max(1, a.lvl)}</small></div>
       <div style="flex:1"><h4 style="margin:0 0 4px;font-size:18px">${a.name}</h4><div class="bar"><i style="width:${a.val / a.next * 100}%"></i><span>${a.val} / ${a.next}</span></div><p class="muted" style="margin:8px 0 0">${a.lvl >= a.max ? 'Nível máximo atingido!' : a.desc}</p></div></div>`).join('')}</div>`;
 }
+function voiceSetting() {
+  if (!HAS_TTS) return '';
+  const list = voicesFor(); const cur = pickVoice();
+  if (!list.length) return `<div class="setting"><label>Voz</label><span class="muted">Sem vozes de ${course().name.toLowerCase()} neste dispositivo</span></div>`;
+  return `<div class="setting" style="flex-wrap:wrap"><div><label>Voz (${course().name.toLowerCase()})</label><div class="muted" style="font-size:14px">${voiceScore(cur, state.course) >= 35 ? 'Voz natural ✓' : 'Para uma voz mais humana, instala uma voz «Premium» ou «Melhorada» nas definições do sistema.'}</div></div>
+    <div class="row"><select class="text-input" id="voice-select" style="width:auto;max-width:260px;padding:8px 10px">${list.map(v => `<option ${v === cur ? 'selected' : ''} value="${esc(v.name)}">${esc(v.name.replace(/\s*\(.*\)$/, ''))} · ${esc(v.lang)}</option>`).join('')}</select>
+    <button class="speak-btn small" data-act="testVoice">${I.speaker}</button></div></div>`;
+}
 function settingsPage() {
   const sw = (k, label, note) => `<div class="setting"><div><label>${label}</label>${note ? `<div class="muted" style="font-size:14px">${note}</div>` : ''}</div><button class="switch ${state.settings[k] ? 'on' : ''}" data-act="toggle" data-arg="${k}" aria-label="${label}"></button></div>`;
   const goals = [[10, 'Casual'], [20, 'Normal'], [30, 'Sério'], [50, 'Intenso']];
@@ -937,6 +988,7 @@ function settingsPage() {
     <h2 class="section-title">Meta diária</h2><div class="seg">${goals.map(([n, l]) => `<button class="${state.goal === n ? 'on' : ''}" data-act="goal" data-arg="${n}">${l} · ${n} XP</button>`).join('')}</div>
     <h2 class="section-title">Curso</h2><div class="setting"><div class="row">${flag(state.course)}<label>${course().name}</label></div><button class="btn ghost" data-act="courses">Mudar</button></div>
     <h2 class="section-title">Preferências</h2>
+    ${voiceSetting()}
     ${sw('sound', 'Efeitos sonoros')}${sw('listen', 'Exercícios de audição', HAS_TTS ? '' : 'O teu browser não suporta voz')}${sw('speak', 'Exercícios de fala', SR ? '' : 'Disponível no Chrome e no Edge')}${sw('dark', 'Modo escuro')}
     <h2 class="section-title">Dados</h2><p class="muted">O teu progresso fica guardado neste browser.</p><button class="btn bad" data-act="resetAsk">Apagar progresso</button>
     <p class="muted" style="margin-top:30px;font-size:14px">Kiri v1.0 · Projeto independente, sem ligação a outras plataformas de línguas.</p>`;
@@ -948,7 +1000,7 @@ function renderWelcome() {
   const root = $('#root');
   let inner = '';
   if (W.step === 0) inner = `${mascot('cheer')}<h1>Olá! Eu sou o Kiri.</h1><p>A forma gratuita, divertida e eficaz de aprenderes uma língua.</p><button class="btn" style="min-width:300px" data-act="w" data-arg="1">Começar</button>`;
-  if (W.step === 1) inner = `<h1>O que queres aprender?</h1><div class="course-grid" style="width:100%">${Object.entries(C).map(([code, c]) => `<button class="course-card" data-act="wCourse" data-arg="${code}">${flag(code, 'lg')}${c.name}<small>${c.learners} alunos</small></button>`).join('')}</div>`;
+  if (W.step === 1) inner = `<h1>O que queres aprender?</h1><div class="course-grid" style="width:100%">${Object.entries(C).map(([code, c]) => `<button class="course-card" data-act="wCourse" data-arg="${code}">${flag(code, 'lg')}${c.name}<small>${c.units.length} unidades</small></button>`).join('')}</div>`;
   if (W.step === 2) inner = `${mascot('happy')}<h1>Qual é a tua meta diária?</h1><div class="list-choices" style="width:100%;max-width:440px">${[[10, 'Casual', '5 min/dia'], [20, 'Normal', '10 min/dia'], [30, 'Sério', '15 min/dia'], [50, 'Intenso', '20 min/dia']].map(([n, l, t]) => `<button class="choice ${W.goal === n ? 'sel' : ''}" data-act="wGoal" data-arg="${n}" style="justify-content:space-between;padding-left:18px"><span>${l}</span><span class="muted">${t}</span></button>`).join('')}</div><button class="btn" style="min-width:300px" data-act="w" data-arg="3">Continuar</button>`;
   if (W.step === 3) inner = `${mascot('cheer')}<h1>Como te chamas?</h1><input class="text-input" id="w-name" maxlength="24" placeholder="O teu nome" style="max-width:380px;text-align:center"><button class="btn" style="min-width:300px" data-act="wDone">Começar a aprender</button>`;
   root.innerHTML = `<div class="welcome"><div class="inner">${inner}</div></div>`;
@@ -961,6 +1013,7 @@ let lastPage = null;
 function render(keepScroll) {
   checkDay();
   document.documentElement.dataset.theme = state.settings.dark ? 'dark' : '';
+  const tc = $('meta[name=theme-color]'); if (tc) tc.content = state.settings.dark ? '#15141F' : '#FFFFFF';
   if (!state.course) return renderWelcome();
   let page = location.hash.slice(1); if (!PAGES[page]) page = 'learn';
   const y = scrollY;
@@ -969,6 +1022,7 @@ function render(keepScroll) {
     <div class="main"><main class="content">${PAGES[page]()}</main>${rightbar(page)}</div>
     <nav class="bottomnav">${navHtml(page, NAV.slice(0, 6))}</nav></div>`;
   $('.logo svg').setAttribute('width', 40);
+  const vs = $('#voice-select'); if (vs) vs.onchange = () => { state.settings.voices = Object.assign({}, state.settings.voices, { [state.course]: vs.value }); save(); ACT.testVoice(); render(true); };
   const ni = $('#name-input'); if (ni) ni.onchange = () => { state.name = ni.value.trim().slice(0, 24); save(); toast('Nome guardado.'); };
   $$('.path-mascot').forEach((m, i) => { m.style.cssText = `top:-200px;${i % 2 ? 'right' : 'left'}:2%`; });
   if (page === 'learn' && lastPage !== 'learn' && !keepScroll) { const c = $('.start-bubble'); if (c) setTimeout(() => c.parentElement.scrollIntoView({ block: 'center' }), 30); }
@@ -985,6 +1039,8 @@ const ACT = {
   courses: coursesModal, hearts: heartsModal, streak: streakModal, guide: u => guideModal(+u),
   setCourse: code => { state.course = code; cstate(code); save(); closeModal(); render(); toast(`Agora estás a aprender ${C[code].name.toLowerCase()}!`); },
   say: t => speak(t), saySlow: t => speak(t, true),
+  testVoice: () => speak(course().units[0].sentences[0][0]),
+  iosHide: () => { try { localStorage.setItem('kiri-ios-hint', '1'); } catch (e) {} $('.ios-hint')?.remove(); },
   tip: (a, el) => {
     const had = $('.tip', el); $$('.tip').forEach(t => t.remove());
     if (had) return;
